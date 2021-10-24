@@ -1,0 +1,32 @@
+{
+	"name": "rastertile3d",
+	"version": "0.0.9",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"start": "parcel src/index.html",
+		"build": "parcel build src/index.html",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/YUUKIToriyama/rasterTile3D.git"
+	},
+	"keywords": [
+		"webgis"
+	],
+	"author": "YUUKIToriyama <github@toriyama.dev>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/YUUKIToriyama/rasterTile3D/issues"
+	},
+	"homepage": "https://github.com/YUUKIToriyama/rasterTile3D#readme",
+	"dependencies": {
+		"babylonjs": "^4.2.0",
+		"csv-parse": "^4.16.3"
+	},
+	"devDependencies": {
+		"parcel-bundler": "^1.12.5",
+		"typescript": "^4.4.4"
+	}
+}
