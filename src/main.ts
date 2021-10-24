@@ -77,8 +77,8 @@ const createPolygons = (scene: Babylon.Scene, demTile: number[][], pixelData?: U
 				height: height,
 				sideOrientation: Babylon.Mesh.FRONTSIDE
 			}, scene);
-			column.position.x = n - 128;
-			column.position.z = m - 128;
+			column.position.x = m - 128;
+			column.position.z = 128 - n;
 			column.position.y = height / 2;
 			// ラスター画像がある場合はポリゴンに色付けを行なう
 			if (pixelData !== undefined) {
@@ -116,3 +116,12 @@ document.getElementById("showButton").addEventListener("click", async () => {
 	scene = initializeScene();
 	createPolygons(scene, demTile, pixelData);
 });
+
+document.getElementById("previewButton").addEventListener("click", () => {
+	const zoomLevel = parseInt(dom.inputZoomLevel.value);
+	const coord_x = parseInt(dom.inputCoordX.value);
+	const coord_y = parseInt(dom.inputCoordY.value);
+
+	const url = `https://cyberjapandata.gsi.go.jp/xyz/lndst/${zoomLevel}/${coord_x}/${coord_y}.png`;
+	dom.imgRasterTile.src = url;
+})
