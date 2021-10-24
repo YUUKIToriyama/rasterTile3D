@@ -7,6 +7,7 @@ const dom = {
 	inputZoomLevel: document.getElementById("zoomLevel") as HTMLInputElement,
 	inputCoordX: document.getElementById("coord_x") as HTMLInputElement,
 	inputCoordY: document.getElementById("coord_y") as HTMLInputElement,
+	imgRasterTile: document.getElementById("rasterTileImage") as HTMLImageElement
 }
 
 const getDemTile = async (zoomLevel: number, x: number, y: number) => {
@@ -25,6 +26,7 @@ const getDemTile = async (zoomLevel: number, x: number, y: number) => {
 const getRasterTile = async (zoomLevel: number, x: number, y: number): Promise<Uint8Array> => {
 	// 地理院全国ランドサットモザイク画像にアクセス
 	const url = `https://cyberjapandata.gsi.go.jp/xyz/lndst/${zoomLevel}/${x}/${y}.png`;
+	dom.imgRasterTile.src = url;
 	return new Promise((resolve, reject) => {
 		getPixels(url, (error, pixels) => {
 			if (error) {
@@ -80,7 +82,7 @@ const createPolygons = (scene: Babylon.Scene, demTile: number[][], pixelData?: U
 			column.position.y = height / 2;
 			// ラスター画像がある場合はポリゴンに色付けを行なう
 			if (pixelData !== undefined) {
-				const index = (n + m * 256) * 4;
+				const index = (m + n * 256) * 4;
 				const material = new Babylon.StandardMaterial(`material-${n}-${m}`, scene);
 				material.diffuseColor = new Babylon.Color3(
 					pixelData[index] / 256,
