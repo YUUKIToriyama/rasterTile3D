@@ -1,6 +1,13 @@
 import * as Babylon from 'babylonjs';
 import parse from 'csv-parse/lib/sync';
 
+const dom = {
+	canvas: document.getElementById("render3d") as HTMLCanvasElement,
+	inputZoomLevel: document.getElementById("zoomLevel") as HTMLInputElement,
+	inputCoordX: document.getElementById("coord_x") as HTMLInputElement,
+	inputCoordY: document.getElementById("coord_y") as HTMLInputElement
+}
+
 const getDemTile = async (zoomLevel: number, x: number, y: number) => {
 	// 地理院標高タイルにアクセス
 	const url = `http://cyberjapandata.gsi.go.jp/xyz/dem/${zoomLevel}/${x}/${y}.txt`;
@@ -17,12 +24,12 @@ const getDemTile = async (zoomLevel: number, x: number, y: number) => {
 // キャンバスを取得
 const canvas = document.getElementById("render3d");
 // 3Dエンジンを読み込む
-const engine = new Babylon.Engine(canvas as HTMLCanvasElement, true, {
+const engine = new Babylon.Engine(dom.canvas, true, {
 	preserveDrawingBuffer: true,
 	stencil: true
 });
-
-const createScene = (demTile: number[][]) => {
+// ステージのセッティング
+const initializeScene = () => {
 	// シーンを作成
 	const scene = new Babylon.Scene(engine);
 	// カメラを作成
@@ -31,8 +38,18 @@ const createScene = (demTile: number[][]) => {
 	camera.attachControl(canvas, false);
 	// ライトを作成
 	const light = new Babylon.HemisphericLight("light1", new Babylon.Vector3(1000, 1000, 0), scene);
+	// グラウンドを作成
+	const ground = Babylon.MeshBuilder.CreateGround("ground1", {
+		width: 256,
+		height: 256,
+		subdivisions: 2,
+		updatable: false
+	}, scene);
+	return scene;
+}
 
-	// ポリゴンを作成
+// 標高タイルのデータからポリゴンを作成
+const createPolygons = (scene: Babylon.Scene, demTile: number[][]) => {
 	const dest = 3;
 	for (let n = 0; n < 256; n = n + dest) {
 		for (let m = 0; m < 256; m = m + dest) {
@@ -49,22 +66,23 @@ const createScene = (demTile: number[][]) => {
 		}
 	}
 
-	// グラウンドを作成
-	const ground = Babylon.MeshBuilder.CreateGround("ground1", {
-		width: 256,
-		height: 256,
-		subdivisions: 2,
-		updatable: false
-	}, scene);
-	return scene;
 }
 
-getDemTile(11, 1809, 803).then(demTile => {
-	const scene = createScene(demTile);
-	engine.runRenderLoop(() => {
-		scene.render();
-	});
-	window.addEventListener("resize", () => {
-		engine.resize();
-	});
+let scene = initializeScene();
+engine.runRenderLoop(() => {
+	scene.render();
+});
+window.addEventListener("resize", () => {
+	engine.resize();
+});
+
+
+document.getElementById("showButton").addEventListener("click", () => {
+	const zoomLevel = parseInt(dom.inputZoomLevel.value);
+	const coord_x = parseInt(dom.inputCoordX.value);
+	const coord_y = parseInt(dom.inputCoordY.value);
+	getDemTile(zoomLevel, coord_x, coord_y).then(demTile => {
+		scene = initializeScene();
+		createPolygons(scene, demTile);
+	})
 });

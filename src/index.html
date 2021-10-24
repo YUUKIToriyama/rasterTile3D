@@ -4,17 +4,51 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
+	<title>YUUKIToriyama/rasterTile3D</title>
 	<style>
+		body {
+			display: flex;
+			height: 100vh;
+		}
+
 		#render3d {
-			width: 100%;
+			width: 80%;
 			height: 100%;
+		}
+
+		#sideBar {
+			width: 20%;
+			padding: 5%;
+		}
+
+		input {
+			width: 7em;
 		}
 	</style>
 </head>
 
 <body>
 	<canvas id="render3d"></canvas>
+	<div id="sideBar">
+		<table>
+			<tr>
+				<th><label for="zoomLevel">ズームレベル</label></th>
+				<td><input type="number" id="zoomLevel" value="11" /></td>
+			</tr>
+			<tr>
+				<th><label for="coord_x">X座標</label></th>
+				<td><input type="number" id="coord_x" value="1809" /></td>
+			</tr>
+			<tr>
+				<th><label for="coord_y">Y座標</label></th>
+				<td><input type="number" id="coord_y" value="803" /></td>
+			</tr>
+			<tr>
+				<th></th>
+				<td><input type="button" id="showButton" value="表示"></td>
+			</tr>
+		</table>
+	</div>
 	<script src="./main.ts"></script>
 </body>
 
