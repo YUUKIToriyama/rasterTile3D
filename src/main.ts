@@ -12,7 +12,7 @@ const dom = {
 
 const getDemTile = async (zoomLevel: number, x: number, y: number) => {
 	// 地理院標高タイルにアクセス
-	const url = `http://cyberjapandata.gsi.go.jp/xyz/dem/${zoomLevel}/${x}/${y}.txt`;
+	const url = `https://cyberjapandata.gsi.go.jp/xyz/dem/${zoomLevel}/${x}/${y}.txt`;
 	const rawCsv = await fetch(url).then(response => response.text()).catch(error => {
 		throw error;
 	});
