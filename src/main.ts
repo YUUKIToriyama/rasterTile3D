@@ -5,7 +5,8 @@ const dom = {
 	inputZoomLevel: document.getElementById("zoomLevel") as HTMLInputElement,
 	inputCoordX: document.getElementById("coord_x") as HTMLInputElement,
 	inputCoordY: document.getElementById("coord_y") as HTMLInputElement,
-	imgRasterTile: document.getElementById("rasterTileImage") as HTMLImageElement
+	imgRasterTile: document.getElementById("rasterTileImage") as HTMLImageElement,
+	selectTile: document.getElementById("rasterTileSelect") as HTMLSelectElement
 }
 // キャンバスを取得
 const canvas = document.getElementById("render3d");
@@ -34,10 +35,10 @@ const initializeScene = () => {
 	return scene;
 }
 
-const createPolygon = (xyz: { zoomLevel: number, coord_x: number, coord_y: number }, scene: Babylon.Scene) => {
-	const rasterTileUrl = `https://cyberjapandata.gsi.go.jp/xyz/std/${xyz.zoomLevel}/${xyz.coord_x}/${xyz.coord_y}.png`;
+const createPolygon = (rasterTileUrl: string, xyz: { zoomLevel: number, coord_x: number, coord_y: number }, scene: Babylon.Scene) => {
+	const url = rasterTileUrl.replace("{z}", xyz.zoomLevel.toString()).replace("{x}", xyz.coord_x.toString()).replace("{y}", xyz.coord_y.toString());
 	const material = new Babylon.StandardMaterial("ground2", scene);
-	material.diffuseTexture = new Babylon.Texture(rasterTileUrl, scene);
+	material.diffuseTexture = new Babylon.Texture(url, scene);
 	const demTileUrl = `https://cyberjapandata.gsi.go.jp/xyz/relief/${xyz.zoomLevel}/${xyz.coord_x}/${xyz.coord_y}.png`;
 	const ground = Babylon.Mesh.CreateGroundFromHeightMap("ground2", demTileUrl, 256, 256, 1010, 30, 0, scene);
 	ground.material = material;
@@ -52,14 +53,15 @@ window.addEventListener("resize", () => {
 	engine.resize();
 });
 
-
 document.getElementById("showButton").addEventListener("click", async () => {
 	const zoomLevel = parseInt(dom.inputZoomLevel.value);
 	const coord_x = parseInt(dom.inputCoordX.value);
 	const coord_y = parseInt(dom.inputCoordY.value);
+	const rasterTileUrl = dom.selectTile.value;
+	console.log(rasterTileUrl);
 
 	scene = initializeScene();
-	createPolygon({
+	createPolygon(rasterTileUrl, {
 		zoomLevel: zoomLevel,
 		coord_x: coord_x,
 		coord_y: coord_y
