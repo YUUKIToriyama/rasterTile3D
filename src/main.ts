@@ -1,6 +1,4 @@
 import * as Babylon from 'babylonjs';
-import parse from 'csv-parse/lib/sync';
-import getPixels from 'get-pixels';
 
 const dom = {
 	canvas: document.getElementById("render3d") as HTMLCanvasElement,
@@ -9,35 +7,6 @@ const dom = {
 	inputCoordY: document.getElementById("coord_y") as HTMLInputElement,
 	imgRasterTile: document.getElementById("rasterTileImage") as HTMLImageElement
 }
-
-const getDemTile = async (zoomLevel: number, x: number, y: number) => {
-	// 地理院標高タイルにアクセス
-	const url = `https://cyberjapandata.gsi.go.jp/xyz/dem/${zoomLevel}/${x}/${y}.txt`;
-	const rawCsv = await fetch(url).then(response => response.text()).catch(error => {
-		throw error;
-	});
-	const csv: number[][] = parse(rawCsv, {
-		columns: false,
-		delimiter: ','
-	});
-	return csv;
-}
-
-const getRasterTile = async (zoomLevel: number, x: number, y: number): Promise<Uint8Array> => {
-	// 地理院全国ランドサットモザイク画像にアクセス
-	const url = `https://cyberjapandata.gsi.go.jp/xyz/lndst/${zoomLevel}/${x}/${y}.png`;
-	dom.imgRasterTile.src = url;
-	return new Promise((resolve, reject) => {
-		getPixels(url, (error, pixels) => {
-			if (error) {
-				reject(error);
-			} else {
-				resolve(pixels.data as Uint8Array);
-			}
-		})
-	});
-}
-
 // キャンバスを取得
 const canvas = document.getElementById("render3d");
 // 3Dエンジンを読み込む
@@ -65,35 +34,14 @@ const initializeScene = () => {
 	return scene;
 }
 
-// 標高タイルのデータからポリゴンを作成
-const createPolygons = (scene: Babylon.Scene, demTile: number[][], pixelData?: Uint8Array) => {
-	const dest = 5;
-	for (let n = 0; n < 256; n = n + dest) {
-		for (let m = 0; m < 256; m = m + dest) {
-			const height = demTile[n][m] / 10;
-			const column = Babylon.MeshBuilder.CreateBox(`column-${n}-${m}`, {
-				size: dest,
-				width: dest,
-				height: height,
-				sideOrientation: Babylon.Mesh.FRONTSIDE
-			}, scene);
-			column.position.x = m - 128;
-			column.position.z = 128 - n;
-			column.position.y = height / 2;
-			// ラスター画像がある場合はポリゴンに色付けを行なう
-			if (pixelData !== undefined) {
-				const index = (m + n * 256) * 4;
-				const material = new Babylon.StandardMaterial(`material-${n}-${m}`, scene);
-				material.diffuseColor = new Babylon.Color3(
-					pixelData[index] / 256,
-					pixelData[index + 1] / 256,
-					pixelData[index + 2] / 256
-				);
-				column.material = material;
-			}
-		}
-	}
-
+const createPolygon = (xyz: { zoomLevel: number, coord_x: number, coord_y: number }, scene: Babylon.Scene) => {
+	const rasterTileUrl = `https://cyberjapandata.gsi.go.jp/xyz/std/${xyz.zoomLevel}/${xyz.coord_x}/${xyz.coord_y}.png`;
+	const material = new Babylon.StandardMaterial("ground2", scene);
+	material.diffuseTexture = new Babylon.Texture(rasterTileUrl, scene);
+	const demTileUrl = `https://cyberjapandata.gsi.go.jp/xyz/relief/${xyz.zoomLevel}/${xyz.coord_x}/${xyz.coord_y}.png`;
+	const ground = Babylon.Mesh.CreateGroundFromHeightMap("ground2", demTileUrl, 256, 256, 1010, 30, 0, scene);
+	ground.material = material;
+	ground.position.y = 0;
 }
 
 let scene = initializeScene();
@@ -110,11 +58,12 @@ document.getElementById("showButton").addEventListener("click", async () => {
 	const coord_x = parseInt(dom.inputCoordX.value);
 	const coord_y = parseInt(dom.inputCoordY.value);
 
-	const demTile = await getDemTile(zoomLevel, coord_x, coord_y);
-	const pixelData = await getRasterTile(zoomLevel, coord_x, coord_y);
-	console.log(pixelData);
 	scene = initializeScene();
-	createPolygons(scene, demTile, pixelData);
+	createPolygon({
+		zoomLevel: zoomLevel,
+		coord_x: coord_x,
+		coord_y: coord_y
+	}, scene);
 });
 
 document.getElementById("previewButton").addEventListener("click", () => {
