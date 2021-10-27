@@ -1,15 +1,11 @@
 import * as Babylon from 'babylonjs';
+import { getInputValues, xyz2url } from './utils';
 
 const dom = {
 	canvas: document.getElementById("render3d") as HTMLCanvasElement,
-	inputZoomLevel: document.getElementById("zoomLevel") as HTMLInputElement,
-	inputCoordX: document.getElementById("coord_x") as HTMLInputElement,
-	inputCoordY: document.getElementById("coord_y") as HTMLInputElement,
-	imgRasterTile: document.getElementById("rasterTileImage") as HTMLImageElement,
-	selectTile: document.getElementById("rasterTileSelect") as HTMLSelectElement
+	imgRasterTile: document.getElementById("rasterTileImage") as HTMLImageElement
 }
-// キャンバスを取得
-const canvas = document.getElementById("render3d");
+
 // 3Dエンジンを読み込む
 const engine = new Babylon.Engine(dom.canvas, true, {
 	preserveDrawingBuffer: true,
@@ -22,11 +18,11 @@ const initializeScene = () => {
 	// カメラを作成
 	const camera = new Babylon.ArcRotateCamera("camera1", 0, Math.PI / 2.5, 3, new Babylon.Vector3(0, 250, -500), scene);
 	camera.setTarget(Babylon.Vector3.Zero());
-	camera.attachControl(canvas, false);
+	camera.attachControl(dom.canvas, false);
 	// ライトを作成
-	const light = new Babylon.HemisphericLight("light1", new Babylon.Vector3(1000, 1000, 0), scene);
+	new Babylon.HemisphericLight("light1", new Babylon.Vector3(1000, 1000, 0), scene);
 	// グラウンドを作成
-	const ground = Babylon.MeshBuilder.CreateGround("ground1", {
+	Babylon.MeshBuilder.CreateGround("ground1", {
 		width: 256,
 		height: 256,
 		subdivisions: 2,
@@ -35,12 +31,13 @@ const initializeScene = () => {
 	return scene;
 }
 
-const createPolygon = (rasterTileUrl: string, xyz: { zoomLevel: number, coord_x: number, coord_y: number }, scene: Babylon.Scene) => {
-	const url = rasterTileUrl.replace("{z}", xyz.zoomLevel.toString()).replace("{x}", xyz.coord_x.toString()).replace("{y}", xyz.coord_y.toString());
+const createPolygon = (rasterTileEndpoint: string, xyz: { zoomLevel: number, coord_x: number, coord_y: number }, scene: Babylon.Scene) => {
 	const material = new Babylon.StandardMaterial("ground2", scene);
-	material.diffuseTexture = new Babylon.Texture(url, scene);
-	const demTileUrl = `https://cyberjapandata.gsi.go.jp/xyz/relief/${xyz.zoomLevel}/${xyz.coord_x}/${xyz.coord_y}.png`;
-	const ground = Babylon.Mesh.CreateGroundFromHeightMap("ground2", demTileUrl, 256, 256, 1010, 30, 0, scene);
+	const rasterTileUrl = xyz2url(rasterTileEndpoint, xyz);
+	material.diffuseTexture = new Babylon.Texture(rasterTileUrl, scene);
+	const demTileEndpoint = "https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png"
+	const demTileUrl = xyz2url(demTileEndpoint, xyz);
+	const ground = Babylon.Mesh.CreateGroundFromHeightMap("ground2", demTileUrl, 256, 256, 1010, 10, 0, scene);
 	ground.material = material;
 	ground.position.y = 0;
 }
@@ -53,26 +50,15 @@ window.addEventListener("resize", () => {
 	engine.resize();
 });
 
+// 表示ボタンを押したとき
 document.getElementById("showButton").addEventListener("click", async () => {
-	const zoomLevel = parseInt(dom.inputZoomLevel.value);
-	const coord_x = parseInt(dom.inputCoordX.value);
-	const coord_y = parseInt(dom.inputCoordY.value);
-	const rasterTileUrl = dom.selectTile.value;
-	console.log(rasterTileUrl);
-
+	const { tileUrl, ...xyz } = getInputValues();
 	scene = initializeScene();
-	createPolygon(rasterTileUrl, {
-		zoomLevel: zoomLevel,
-		coord_x: coord_x,
-		coord_y: coord_y
-	}, scene);
+	createPolygon(tileUrl, xyz, scene);
 });
-
+// プレビューボタンを押したとき
 document.getElementById("previewButton").addEventListener("click", () => {
-	const zoomLevel = parseInt(dom.inputZoomLevel.value);
-	const coord_x = parseInt(dom.inputCoordX.value);
-	const coord_y = parseInt(dom.inputCoordY.value);
-
-	const url = `https://cyberjapandata.gsi.go.jp/xyz/lndst/${zoomLevel}/${coord_x}/${coord_y}.png`;
+	const { tileUrl, ...xyz } = getInputValues();
+	const url = xyz2url(tileUrl, xyz);
 	dom.imgRasterTile.src = url;
-})
+});
